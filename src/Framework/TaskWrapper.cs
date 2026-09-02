@@ -1,69 +1,74 @@
-﻿using CommunicationFramework;
+﻿using System.Collections.Concurrent;
 
-namespace Framework
+namespace Framework;
+
+public class TaskWrapper
 {
-    public class TaskWrapper
+    public TaskWrapper(ITask task)
     {
-        public TaskWrapper(ITask task)
+        new ReflectionDispatcher(InternalSubscribe);
+        new MessageDispatcher(InternalSubscribe, task);
+    }
+    private readonly ConcurrentDictionary<string, Queue<ITask>> _taskQueues = new();
+    private readonly ConcurrentDictionary<string, Queue<IDispatcher>> _typeQueues = new();
+    /// <summary>
+    /// Subscribes a task to a specific topic. When a message is published to that topic, the subscribed task will be executed.
+    /// </summary>
+    /// <param name="topic"></param>
+    /// <param name="task"></param>
+    public void Subscribe(string topic, ITask task)
+    {
+        if (!_taskQueues.TryGetValue(topic, out var queue))
         {
-            new ReflectionDispatcher(this);
-            new MessageDispatcher(this);
-
+            queue = new Queue<ITask>();
+            _taskQueues[topic] = queue;
         }
-        private  readonly Dictionary<Type, List<Func<object, Task>>> Handlers = [];
-        private  readonly object SyncRoot = new();
-        public  IDisposable Subscribe<T>(Func<T, Task> handler)
+        queue.Enqueue(task);
+    }
+    private void InternalSubscribe(string topic, IDispatcher dispatcher)
+    {
+        if (!_typeQueues.TryGetValue(topic, out var queue))
         {
-            Func<object, Task> wrapper = message => handler((T)message);
-
-            lock (SyncRoot)
+            queue = new Queue<IDispatcher>();
+            _typeQueues[topic] = queue;
+        }
+        queue.Enqueue(dispatcher);
+    }
+    private async Task InternalPublishAsync(string topic, MateoMsg message)
+    {
+        if (_typeQueues.TryGetValue(topic, out var queue))
+        {
+            foreach (var t in queue)
             {
-                if (!Handlers.TryGetValue(typeof(T), out var handlers))
+                if (t != null)
                 {
-                    handlers = [];
-                    Handlers[typeof(T)] = handlers;
+                  await t.HandleAsync(message);
                 }
-
-                handlers.Add(wrapper);
             }
-
-            return new Subscription(() => Unsubscribe<T>(wrapper));
         }
+    }
 
-        public  async Task PublishAsync<T>(T message)
+    public async Task PublishAsync(string topic, MateoMsg message)
+    {
+        if (_taskQueues.TryGetValue(topic, out var queue))
         {
-            Func<object, Task>[] handlers;
-
-            lock (SyncRoot)
+            foreach (var task in queue)
             {
-                handlers = Handlers.TryGetValue(typeof(T), out var registered)
-                    ? [.. registered]
-                    : [];
-            }
-
-            foreach (var handler in handlers)
-                await handler(message!);
-        }
-
-        private  void Unsubscribe<T>(Func<object, Task> handler)
-        {
-            lock (SyncRoot)
-            {
-                if (!Handlers.TryGetValue(typeof(T), out var handlers))
-                    return;
-
-                handlers.Remove(handler);
-                if (handlers.Count == 0)
-                    Handlers.Remove(typeof(T));
+                // Here you can implement the logic to handle the message with the task
+                var t = task.GetType();
+                if (t != null)
+                    t.GetProperty(nameof(ITask.inputParameter)).SetValue(task, message);
+                await task.Run();
             }
         }
-
-        private sealed class Subscription(Action unsubscribe) : IDisposable
+       await InternalPublishAsync(topic, message);
+    }
+    public void Unsubscribe(string topic, ITask task)
+    {
+        if (_taskQueues.TryGetValue(topic, out var queue))
         {
-            private Action? _unsubscribe = unsubscribe;
-
-            public void Dispose() => Interlocked.Exchange(ref _unsubscribe, null)?.Invoke();
+            var newQueue = new Queue<ITask>(queue.Where(t => t != task));
+            _taskQueues[topic] = newQueue;
         }
-
     }
 }

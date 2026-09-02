@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Framework
+﻿namespace Framework
 {
     public interface ISecs
     {
-        Task<object?> RunAsync(object?[] args);
+        SecsWrapper wrapper { get; }
+        Task RunAsync();
     }
 }

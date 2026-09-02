@@ -1,52 +1,36 @@
-using Framework;
 using System.Reflection;
 
-namespace CommunicationFramework;
+namespace Framework;
 
-public class ReflectionDispatcher
+public class ReflectionDispatcher : IDispatcher
 {
-    public delegate Task MessageHandler(CallResult message);
-    private readonly MessageHandler handler;
-    public ReflectionDispatcher(TaskWrapper wrapper)
+    public ReflectionDispatcher(Action<string, IDispatcher> internalSubscribe)
     {
-        _subscription ??= wrapper.Subscribe<CallMessage>(HandleAsync);
-        handler = new MessageHandler(wrapper.PublishAsync);
-
+        internalSubscribe(Msg.Command, this);
     }
-    private IDisposable? _subscription;
-    private async Task HandleAsync(CallMessage message)
+    async Task IDispatcher.HandleAsync(MateoMsg msg)
     {
-        CallResult result = new CallResult { Id = message.Id };
-
         try
         {
-            var assembly = Assembly.Load(message.AssemblyName);
-            var task = assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(ISecs)));
-
-
+            var assembly = Assembly.Load(msg.GetValue("AssemblyName"));
+            var task = assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(ISecs)) && t.Name == msg.GetValue(Msg.TypeName));
             var instance = task != null ? Activator.CreateInstance(task) : null;
-            var returnValue = instance != null ? await ((ISecs)instance).RunAsync(message.Arguments) : null;
-
-            result.Data = await GetReturnValueAsync(returnValue);
-            result.Success = true;
+            if (task != null && instance != null)
+            {
+                var field = task.GetField("<wrapper>k__BackingField",
+        BindingFlags.Instance | BindingFlags.NonPublic);
+                field.SetValue(instance, new SecsWrapper());
+            }
+            if (instance != null)
+            {
+                await ((ISecs)instance).RunAsync();
+            }
         }
         catch (Exception exception)
         {
-            result.Error = (exception as TargetInvocationException)?.InnerException?.Message
-                           ?? exception.Message;
+            string errorMessage = exception.Message;
+            throw;
         }
 
-        await handler.Invoke(result);
-    }
-
-    private static async Task<object?> GetReturnValueAsync(object? returnValue)
-    {
-        if (returnValue is not Task task)
-            return returnValue;
-
-        await task;
-        return task.GetType().IsGenericType
-            ? task.GetType().GetProperty("Result")?.GetValue(task)
-            : null;
     }
 }

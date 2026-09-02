@@ -1,11 +1,9 @@
 using Framework;
 using LibraryA;
 
-AClient client = new AClient
-{
-    wrapper = new TaskWrapper(this),
-    inputParameter = ["Water","123"]
-};
+AClient client = new AClient();
+
+client.wrapper = new TaskWrapper(client);
 
 ITask task = client;
 await task.Run();

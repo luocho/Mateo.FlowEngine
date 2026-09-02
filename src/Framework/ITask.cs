@@ -1,11 +1,9 @@
-﻿using CommunicationFramework;
-
-namespace Framework
+﻿namespace Framework
 {
     public interface ITask
     {
         TaskWrapper wrapper { get; }
-        object[] inputParameter { get; }
+        MateoMsg inputParameter { get; }
         Task Run();
         Task ReceiveMessage();
     }

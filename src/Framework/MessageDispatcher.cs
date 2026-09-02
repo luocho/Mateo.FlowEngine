@@ -1,21 +1,18 @@
-﻿using CommunicationFramework;
+﻿namespace Framework;
 
-namespace Framework
+public class MessageDispatcher : IDispatcher
 {
-    public class MessageDispatcher
+    public delegate Task MessageHandlerDelegate();
+    public readonly MessageHandlerDelegate MessageHandler;
+    public MessageDispatcher(Action<string, IDispatcher> internalSubscribe, ITask task)
     {
-        public delegate Task MessageHandlerDelegate();
-        public readonly MessageHandlerDelegate MessageHandler;
-        public MessageDispatcher(TaskWrapper wrapper,ITask task)
-        {
-            wrapper.Subscribe<CallResult>(HandleMessageAsync);
-            MessageHandler = task.ReceiveMessage;
-        }
-
-        private async Task HandleMessageAsync(CallResult message)
-        {
-            // Handle the message here
-            await MessageHandler();
-        }
+        internalSubscribe(Msg.Reply, this);
+        internalSubscribe(Msg.Event, this);
+        MessageHandler = task.ReceiveMessage;
+    }
+    async Task IDispatcher.HandleAsync(MateoMsg msg)
+    {
+        // Handle the message here
+        await MessageHandler();
     }
 }
