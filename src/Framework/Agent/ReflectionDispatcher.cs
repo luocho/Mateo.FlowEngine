@@ -4,9 +4,12 @@ namespace Framework;
 
 public class ReflectionDispatcher : IDispatcher
 {
-    public ReflectionDispatcher(Action<string, IDispatcher> internalSubscribe)
+    public delegate Task InternalPublishAsync(string topic, MateoMsg msg);
+    private InternalPublishAsync internalPublishAsync;
+    public ReflectionDispatcher(Action<string, IDispatcher> internalSubscribe, InternalPublishAsync internalPublishAsync)
     {
         internalSubscribe(Msg.Command, this);
+        this.internalPublishAsync = internalPublishAsync;
     }
     async Task IDispatcher.HandleAsync(MateoMsg msg)
     {
@@ -19,7 +22,8 @@ public class ReflectionDispatcher : IDispatcher
             {
                 var field = task.GetField("<wrapper>k__BackingField",
         BindingFlags.Instance | BindingFlags.NonPublic);
-                field.SetValue(instance, new SecsWrapper());
+                field.SetValue(instance,
+                               new SecsWrapper(internalPublishAsync.Invoke));
             }
             if (instance != null)
             {

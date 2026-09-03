@@ -7,8 +7,7 @@ public class MateoMsg
         return $"{{" +
             $"{string.Join(",", _data
             .Where(p => !p.Key.Equals(Msg.Id))
-            .Select(kv => $"\"{kv.Key}\": \"{kv.Value}\""))
-            }}}";
+            .Select(kv => $"\"{kv.Key}\": \"{kv.Value}\""))}}}";
     }
     public MateoMsg()
     {
@@ -28,16 +27,12 @@ public class MateoMsg
         msg.SetValue(Msg.Command, command);
         return msg;
     }
-    private Dictionary<string, string> _data { get; set; } = new Dictionary<string, string>();
-    public string GetValue(string key)
+    public static MateoMsg CreateReplyMsg()
     {
-        if (_data.ContainsKey(key))
-        {
-            return _data[key];
-        }
-        return string.Empty;
+        return new ReplyMsg();
     }
-    public string TryGetValue(string key, string defaultValue = "")
+    private Dictionary<string, string> _data { get; set; } = new Dictionary<string, string>();
+    public string GetValue(string key, string defaultValue = "")
     {
         if (_data.ContainsKey(key))
         {
@@ -67,5 +62,12 @@ public class CommandMsg : MateoMsg
         SetValue(Msg.AssemblyName, "LibraryB");
         SetValue(Msg.TypeName, "OrderService");
         SetValue(Msg.MethodName, "ProcessAsync");
+    }
+}
+public class ReplyMsg : MateoMsg
+{
+    public ReplyMsg()
+    {
+        SetValue(Msg.MsgType, "R");
     }
 }

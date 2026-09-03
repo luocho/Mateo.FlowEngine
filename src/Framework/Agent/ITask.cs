@@ -5,6 +5,6 @@
         TaskWrapper wrapper { get; }
         MateoMsg inputParameter { get; }
         Task Run();
-        Task ReceiveMessage();
+        Task ReceiveMessageAsync();
     }
 }

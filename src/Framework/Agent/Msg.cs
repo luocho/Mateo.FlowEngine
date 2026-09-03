@@ -17,6 +17,7 @@
         public const string Command = "Command";
         public const string Reply = "Reply";
         public const string Event = "Event";
+        public const string Topic = "Topic";
     }
 
     public class Command

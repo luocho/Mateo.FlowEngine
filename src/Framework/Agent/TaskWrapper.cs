@@ -1,21 +1,17 @@
 ﻿using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace Framework;
 
 public class TaskWrapper
 {
-    public TaskWrapper(ITask task)
+    public TaskWrapper()
     {
-        new ReflectionDispatcher(InternalSubscribe);
-        new MessageDispatcher(InternalSubscribe, task);
+        new ReflectionDispatcher(InternalSubscribe, InternalPublishAsync);
+        new MessageDispatcher(InternalSubscribe, PublishAsync);
     }
     private readonly ConcurrentDictionary<string, Queue<ITask>> _taskQueues = new();
     private readonly ConcurrentDictionary<string, Queue<IDispatcher>> _typeQueues = new();
-    /// <summary>
-    /// Subscribes a task to a specific topic. When a message is published to that topic, the subscribed task will be executed.
-    /// </summary>
-    /// <param name="topic"></param>
-    /// <param name="task"></param>
     public void Subscribe(string topic, ITask task)
     {
         if (!_taskQueues.TryGetValue(topic, out var queue))
@@ -34,7 +30,7 @@ public class TaskWrapper
         }
         queue.Enqueue(dispatcher);
     }
-    private async Task InternalPublishAsync(string topic, MateoMsg message)
+    private async Task InternalPublishAsync(string topic, MateoMsg msg)
     {
         if (_typeQueues.TryGetValue(topic, out var queue))
         {
@@ -42,7 +38,7 @@ public class TaskWrapper
             {
                 if (t != null)
                 {
-                  await t.HandleAsync(message);
+                    await t.HandleAsync(msg);
                 }
             }
         }
@@ -50,18 +46,23 @@ public class TaskWrapper
 
     public async Task PublishAsync(string topic, MateoMsg message)
     {
+        //给所有订阅了该主题的任务发送消息
         if (_taskQueues.TryGetValue(topic, out var queue))
         {
             foreach (var task in queue)
             {
                 // Here you can implement the logic to handle the message with the task
                 var t = task.GetType();
-                if (t != null)
-                    t.GetProperty(nameof(ITask.inputParameter)).SetValue(task, message);
-                await task.Run();
+                var fieldb = t.GetField("<inputParameter>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (fieldb != null)
+                {
+                    fieldb.SetValue(task, message);
+                }
+                await task.ReceiveMessageAsync();
             }
         }
-       await InternalPublishAsync(topic, message);
+        //给所有订阅了该主题的分发器发送消息
+        await InternalPublishAsync(topic, message);
     }
     public void Unsubscribe(string topic, ITask task)
     {
