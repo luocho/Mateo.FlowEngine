@@ -23,5 +23,6 @@ ITask task = client;
 ITask taskb = clientb;
 await taskb.Run();
 await task.Run();
+Console.WriteLine(Thread.CurrentThread.Name);
 
 Console.ReadLine();
