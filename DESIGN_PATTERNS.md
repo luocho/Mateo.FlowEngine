@@ -11,8 +11,6 @@
 
 分析重点是当前代码实际形成的协作关系。仅存在设计意图、但尚未形成完整执行链的模式会单独说明。
 
-当前工作区还在 `LibraryA` 中出现了第二份 `Framework.TaskWrapper` 定义。它与 Framework 项目中的同名类型属于不同程序集，已造成编译冲突；本文仍以 Framework 项目中的 `TaskWrapper` 作为原架构的消息中心进行模式分析，并在风险部分单独记录该冲突。
-
 ## 2. 总体结论
 
 当前项目的核心是一个**进程内事件聚合器/消息总线**。`TaskWrapper` 同时承担中介者和消息路由器的职责；`MateoMsg`/`CommandMsg` 表达命令消息；不同的 `IDispatcher` 根据主题处理消息；`ReflectionDispatcher` 再通过反射加载实现 `ISecs` 的 B 类库类型。
@@ -86,8 +84,6 @@ LibraryA  ──> Framework <── LibraryB
 - `Command` 描述业务命令，例如 `Command.Order`。
 
 `AClient` 创建命令对象后只负责发布，不直接执行 B 的业务代码。这符合命令模式中“请求发送者与请求执行者分离”的思想。
-
-当前完整度有限：`ReflectionDispatcher` 目前只读取 `AssemblyName`，随后查找第一个实现 `ISecs` 的类型并调用 `RunAsync`。`TypeName`、`MethodName`、`Arguments` 和业务 `Command` 尚未参与实际方法选择，因此它还是简化的命令消息，而不是完整的通用命令执行器。
 
 ### 4.4 消息分发器模式
 
