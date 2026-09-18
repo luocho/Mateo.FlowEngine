@@ -1,4 +1,4 @@
-﻿namespace Framework.FlowEngine
+﻿namespace Framework
 {
     public class FlowEngine
     {

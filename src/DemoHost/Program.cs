@@ -1,28 +1,15 @@
 using Framework;
-using LibraryA;
-using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 
-var wrapper = new TaskWrapper();
+var services = new ServiceCollection();
 
-AClient client = new AClient();
-var t = client.GetType();
-var field = t.GetField("<wrapper>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
-if (field != null)
-{
-    field.SetValue(client, wrapper);
-}
-BClient clientb = new BClient();
-var tb = clientb.GetType();
-var fieldb = tb.GetField("<wrapper>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
-if (fieldb != null)
-{
-    fieldb.SetValue(clientb, wrapper);
-}
+services.Init();
 
-ITask task = client;
-ITask taskb = clientb;
-await taskb.Run();
-await task.Run();
-Console.WriteLine(Thread.CurrentThread.Name);
+using var serviceProvider = services.BuildServiceProvider();
 
-Console.ReadLine();
+var action = serviceProvider.GetKeyedService<IAction>(nameof(A_P_DownLoadForHttp));
+await action.RunAsync();
+action = serviceProvider.GetKeyedService<IAction>(nameof(A_P_AnalyseFile));
+await action.RunAsync();
+action = serviceProvider.GetKeyedService<IAction>(nameof(A_S_SaveFile));
+await action.RunAsync();

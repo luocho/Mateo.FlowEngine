@@ -1,4 +1,5 @@
 ﻿using Framework;
+using System.Collections.Concurrent;
 
 public class MateoMsg
 {
@@ -13,25 +14,8 @@ public class MateoMsg
     {
         SetValue(Msg.Id, Guid.NewGuid().ToString());
     }
-    public static MateoMsg CreateMsg()
-    {
-        return new MateoMsg();
-    }
-    public static MateoMsg CreateCommandMsg()
-    {
-        return new CommandMsg();
-    }
-    public static MateoMsg CreateCommandMsg(string command)
-    {
-        var msg = new CommandMsg();
-        msg.SetValue(Msg.Command, command);
-        return msg;
-    }
-    public static MateoMsg CreateReplyMsg()
-    {
-        return new ReplyMsg();
-    }
-    private Dictionary<string, string> _data { get; set; } = new Dictionary<string, string>();
+
+    private ConcurrentDictionary<string, string> _data { get; set; } = new ConcurrentDictionary<string, string>();
     public string GetValue(string key, string defaultValue = "")
     {
         if (_data.ContainsKey(key))
@@ -48,8 +32,30 @@ public class MateoMsg
         }
         else
         {
-            _data.Add(key, value);
+            _data.TryAdd(key, value);
         }
+    }
+}
+
+public static class MateoMsgHelper
+{
+    public static MateoMsg CreateMsg()
+    {
+        return new MateoMsg();
+    }
+    public static MateoMsg CreateCommandMsg()
+    {
+        return new CommandMsg();
+    }
+    public static MateoMsg CreateCommandMsg(string command)
+    {
+        var newMsg = new CommandMsg();
+        newMsg.SetValue(Msg.Command, command);
+        return newMsg;
+    }
+    public static MateoMsg CreateReplyMsg()
+    {
+        return new ReplyMsg();
     }
 }
 

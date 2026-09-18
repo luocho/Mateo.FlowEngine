@@ -9,7 +9,7 @@ public class AClient : ITask
 
     async Task ITask.Run()
     {
-        var msg = MateoMsg.CreateCommandMsg(Command.Order);
+        var msg = MateoMsgHelper.CreateCommandMsg(Command.Order);
         var t = msg.ToString();
         await wrapper.PublishAsync(Msg.Command, msg);
     }
