@@ -7,6 +7,7 @@ namespace Framework
     {
         public static IServiceCollection Init(this IServiceCollection services)
         {
+            services.AddSingleton<FlowEngine>();
             services.AddSingleton<IConfig, ConfigService>();
             var actionTypes = typeof(IAction).Assembly.DefinedTypes
                 .Where(t => t is { IsClass: true, IsAbstract: false } &&
