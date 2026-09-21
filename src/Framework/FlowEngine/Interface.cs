@@ -33,3 +33,8 @@ public interface IAction
 {
     Task RunAsync();
 }
+
+public interface FlowLoader
+{
+    void LoadFlow();
+}

@@ -1,0 +1,25 @@
+syntax="proto3";
+
+option csharp_namespace = "Framework";
+
+package Framework;
+
+enum FlowStepType {
+	FLOW = 0;
+	ACTION = 1;
+}
+
+message FlowStep {
+	string id = 1;
+	string name = 2;
+	string runType = 3;
+	FlowStepType stepType = 4;
+	repeated string nextSteps = 5;
+	repeated string conditions = 6;
+}
+
+message Flow {
+	string id = 1;
+	string name = 2;
+	repeated FlowStep steps = 3;
+}

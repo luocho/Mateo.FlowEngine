@@ -28,3 +28,11 @@ public class ContextService : ILotContext, IDataContext, IEQPContext, IBatchCont
         return _currentContext;
     }
 }
+
+public class FlowLoaderService(IConfig config) : FlowLoader
+{
+    public void LoadFlow()
+    {
+        config.TryGetValue("FlowPath",string.Empty);
+    }
+}
