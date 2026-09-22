@@ -6,5 +6,5 @@ var services = new ServiceCollection();
 services.Init();
 
 using var serviceProvider = services.BuildServiceProvider();
-serviceProvider.GetRequiredService<FlowEngine>().ExecuteFlow(nameof(A_P_DownLoadForHttp));
+await serviceProvider.GetRequiredService<FlowEngine>().ExecuteFlow(nameof(A_P_DownLoadForHttp));
 

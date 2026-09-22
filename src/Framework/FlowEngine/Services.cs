@@ -1,4 +1,8 @@
-﻿namespace Framework;
+﻿using Google.Protobuf;
+using Serilog;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace Framework;
 
 public class ConfigService : IConfig
 {
@@ -8,6 +12,7 @@ public class ConfigService : IConfig
         _configurations = new Dictionary<string, string>();
         _configurations[ConfigConst.URL] = "https://example.com";
         _configurations[ConfigConst.FilePath] = @"D:\demo.txt";
+        _configurations[ConfigConst.FlowPath] = @"D:\mateoflow.mf";
     }
     public string TryGetValue(string key, string defaultValue = "")
     {
@@ -29,10 +34,93 @@ public class ContextService : ILotContext, IDataContext, IEQPContext, IBatchCont
     }
 }
 
-public class FlowLoaderService(IConfig config) : FlowLoader
+public class FlowLoaderService(ILogger logger, IConfig config, IDataContext data) : IFlowLoader
 {
-    public void LoadFlow()
+    public async Task LoadFlowAsync()
     {
-        config.TryGetValue("FlowPath",string.Empty);
+        logger.Information($"Start:Read Flow");
+        string flowPath = config.TryGetValue("FlowPath", string.Empty);
+
+        await write(flowPath);
+        logger.Information($"Proceed:FlowPath={flowPath}");
+        byte[] flowData = await File.ReadAllBytesAsync(flowPath);
+        Flow flow = Flow.Parser.ParseFrom(flowData);
+        data.GetContext().SetValue(ContextConst.FlowObject, flow, true);
+        logger.Information($"End:Read Flow Completed");
+    }
+
+    private async Task write(string flowPath)
+    {
+        #region Demo
+        var flows = new Flow();
+        var currentStep = new FlowStep
+        {
+            Id = 1,
+            Name = "A_P_DownLoadForHttp",
+            RunType = "A_P_DownLoadForHttp",
+            StepType = FlowStepType.Action
+        };
+        var nextSetp = new NextStep
+        {
+            NextStepId = 2,
+            NextStepConditions = "OK"
+        };
+        currentStep.NextSteps.Add(nextSetp);
+        nextSetp = new NextStep
+        {
+            NextStepId = 4,
+            NextStepConditions = "NO"
+        };
+        currentStep.NextSteps.Add(nextSetp);
+        flows.Steps.Add(currentStep);
+
+        currentStep = new FlowStep
+        {
+            Id = 2,
+            Name = "A_P_AnalyseFile",
+            RunType = "A_P_AnalyseFile",
+            StepType = FlowStepType.Action
+        };
+        nextSetp = new NextStep
+        {
+            NextStepId = 3,
+            NextStepConditions = "OK"
+        };
+        currentStep.NextSteps.Add(nextSetp);
+        flows.Steps.Add(currentStep);
+
+        currentStep = new FlowStep
+        {
+            Id = 3,
+            Name = "A_S_SaveFile",
+            RunType = "A_S_SaveFile",
+            StepType = FlowStepType.Action
+        };
+        nextSetp = new NextStep
+        {
+            NextStepId = 4,
+            NextStepConditions = "NO"
+        };
+        currentStep.NextSteps.Add(nextSetp);
+        flows.Steps.Add(currentStep);
+
+        currentStep = new FlowStep
+        {
+            Id = 4,
+            Name = "A_P_Error",
+            RunType = "A_P_Error",
+            StepType = FlowStepType.Action
+        };
+        flows.Steps.Add(currentStep);
+        #endregion
+        await File.WriteAllBytesAsync(flowPath, flows.ToByteArray());
+    }
+}
+public class FlowBuilderService(ILogger logger, IFlowLoader flowLoader) : IFlowBuilder
+{
+    public async Task BuildFlowAsync()
+    {
+        logger.Information($"Start:开始建造Flow");
+        await flowLoader.LoadFlowAsync();
     }
 }

@@ -7,7 +7,7 @@ public sealed class A_P_AnalyseFile(IDataContext _contextService) : IAction
         var content = _contextService.GetContext();
         var msg = _contextService.GetContext();
         string data = await HandleData(msg.GetValue(ContextConst.DownloadContent));
-        msg.SetValue(ContextConst.HandleData,data);
+        msg.SetValue(ContextConst.HandleData, data);
     }
 
     private async Task<string> HandleData(string msg)

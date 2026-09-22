@@ -1,6 +1,10 @@
 ﻿namespace Framework;
 
 public interface IContext;
+public interface IErrorContext : IContext
+{
+    MateoMsg GetContext();
+}
 public interface IDataContext : IContext
 {
     MateoMsg GetContext();
@@ -34,7 +38,11 @@ public interface IAction
     Task RunAsync();
 }
 
-public interface FlowLoader
+public interface IFlowLoader
 {
-    void LoadFlow();
+    Task LoadFlowAsync();
+}
+public interface IFlowBuilder
+{
+    Task BuildFlowAsync();
 }

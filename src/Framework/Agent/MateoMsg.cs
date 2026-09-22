@@ -16,6 +16,11 @@ public class MateoMsg
     }
 
     private ConcurrentDictionary<string, string> _data { get; set; } = new ConcurrentDictionary<string, string>();
+    private ConcurrentDictionary<string, object> _object { get; set; } = new ConcurrentDictionary<string, object>();
+    public object GetObjValue(string key)
+    {
+        return _object.TryGetValue(key, out var value) ? value : null;
+    }
     public string GetValue(string key, string defaultValue = "")
     {
         if (_data.ContainsKey(key))
@@ -24,16 +29,21 @@ public class MateoMsg
         }
         return defaultValue;
     }
-    public void SetValue(string key, string value)
+    public void SetValue(string key, object value, bool isObject = false)
     {
-        if (_data.ContainsKey(key))
+        if (isObject)
         {
-            _data[key] = value;
+            _object[key] = value;
+        }
+        else if (value is string data)
+        {
+            _data[key] = data;
         }
         else
         {
-            _data.TryAdd(key, value);
+            throw new InvalidDataException("value must be object or string");
         }
+
     }
 }
 
