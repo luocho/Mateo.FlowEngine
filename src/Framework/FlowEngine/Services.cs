@@ -25,7 +25,7 @@ public class ConfigService : IConfig
     }
 }
 
-public class ContextService : ILotContext, IDataContext, IEQPContext, IBatchContext
+public class ContextService : ILotContext, IDataContext, IEQPContext, IBatchContext,IErrorContext
 {
     private MateoMsg _currentContext = new();
     public MateoMsg GetContext()
