@@ -11,6 +11,7 @@ namespace Framework
             services.InitContextTypes();
             services.InitActionTypes();
             services.AddSingleton<FlowEngine>();
+            services.AddSingleton<FlowRunner>();
             services.AddSingleton<IConfig, ConfigService>();
             services.AddSingleton<IFlowLoader, FlowLoaderService>();
             services.AddSingleton<IFlowBuilder, FlowBuilderService>();

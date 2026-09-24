@@ -1,13 +1,27 @@
 ﻿namespace Framework;
 
-public sealed class A_S_SaveFile(IDataContext context, IConfig config) : IAction
+public sealed class A_S_SaveFile(
+    IActionContext actionContext,
+    IErrorContext errorContext,
+    IDataContext dataContext,
+    IConfig config
+    ) : IAction
 {
-    public Task RunAsync()
+    public async Task RunAsync()
     {
-        var data = context.GetContext().GetValue(ContextConst.HandleData);
-        var filePath = config.TryGetValue(ConfigConst.FilePath);
-        File.WriteAllTextAsync(filePath, data);
-        return Task.CompletedTask;
+        try
+        {
+            var data = dataContext.GetContext().GetValue(ContextConst.HandleData);
+            var filePath = config.TryGetValue(ConfigConst.FilePath);
+            await File.WriteAllTextAsync(filePath, data);
+            actionContext.GetContext().SetValue(nameof(A_S_SaveFile), ActionResult.OK);
+        }
+        catch (Exception ex)
+        {
+            errorContext.GetContext().SetValue(ErrorConst.ErrorMsg, ex.Message);
+            actionContext.GetContext().SetValue(nameof(A_P_DownLoadForHttp), ActionResult.NO);
+        }
+
     }
 }
 

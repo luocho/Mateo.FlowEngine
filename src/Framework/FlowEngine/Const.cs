@@ -17,3 +17,12 @@ public class ErrorConst
 {
     public const string ErrorMsg = "ErrorMsg";
 }
+
+public class ActionResult
+{
+    public const string OR = "OR";
+    public const string OK = "OK";
+    public const string NO = "NO";
+    public const string NEXT = "NEXT";
+    public const string AND = "AND";
+}

@@ -19,7 +19,7 @@ public class MateoMsg
     private ConcurrentDictionary<string, object> _object { get; set; } = new ConcurrentDictionary<string, object>();
     public object GetObjValue(string key)
     {
-        return _object.TryGetValue(key, out var value) ? value : null;
+        return _object[key];
     }
     public string GetValue(string key, string defaultValue = "")
     {

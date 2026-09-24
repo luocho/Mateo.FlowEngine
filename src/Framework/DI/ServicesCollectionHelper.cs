@@ -8,19 +8,21 @@ public static class ServicesCollectionHelper
 {
     public static void InitLogger(this IServiceCollection services)
     {
-        const string outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
+        const string outputTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] [{ThreadId}] {SourceContext}\t: {Message:lj}{NewLine}{Exception}";
         string logDirectory = Path.Combine(AppContext.BaseDirectory, "log");
         Directory.CreateDirectory(logDirectory);
         string logFilePath = Path.Combine(logDirectory, "log-.txt");
         Log.Logger = new LoggerConfiguration()
            .MinimumLevel.Debug()
            .Enrich.FromLogContext()
+           .Enrich.WithThreadId()
            .WriteTo.File(
                 logFilePath,
                 outputTemplate: outputTemplate,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 30
             ).CreateLogger();
+        Log.Logger.Information("========================== MateoFlow START {0}==========================", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         services.AddSingleton(Log.Logger);
     }
     public static void InitActionTypes(this IServiceCollection services)

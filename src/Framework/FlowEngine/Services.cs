@@ -1,6 +1,5 @@
 ﻿using Google.Protobuf;
 using Serilog;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Framework;
 
@@ -25,7 +24,7 @@ public class ConfigService : IConfig
     }
 }
 
-public class ContextService : ILotContext, IDataContext, IEQPContext, IBatchContext,IErrorContext
+public class ContextService : ILotContext, IDataContext, IEQPContext, IBatchContext, IErrorContext, IActionContext
 {
     private MateoMsg _currentContext = new();
     public MateoMsg GetContext()
@@ -38,15 +37,15 @@ public class FlowLoaderService(ILogger logger, IConfig config, IDataContext data
 {
     public async Task LoadFlowAsync()
     {
-        logger.Information($"Start:Read Flow");
+        logger.Information($"S\t:Read Flow");
         string flowPath = config.TryGetValue("FlowPath", string.Empty);
 
         await write(flowPath);
-        logger.Information($"Proceed:FlowPath={flowPath}");
+        logger.Information($"P\t:FlowPath={flowPath}");
         byte[] flowData = await File.ReadAllBytesAsync(flowPath);
         Flow flow = Flow.Parser.ParseFrom(flowData);
         data.GetContext().SetValue(ContextConst.FlowObject, flow, true);
-        logger.Information($"End:Read Flow Completed");
+        logger.Information($"E\t:Read Flow Completed");
     }
 
     private async Task write(string flowPath)
@@ -63,13 +62,15 @@ public class FlowLoaderService(ILogger logger, IConfig config, IDataContext data
         var nextSetp = new NextStep
         {
             NextStepId = 2,
-            NextStepConditions = "OK"
+            NextStepConditions = "OK",
+            NextStepRunType= "A_P_AnalyseFile"
         };
         currentStep.NextSteps.Add(nextSetp);
         nextSetp = new NextStep
         {
             NextStepId = 4,
-            NextStepConditions = "NO"
+            NextStepConditions = "NO",
+            NextStepRunType = "A_P_Error"
         };
         currentStep.NextSteps.Add(nextSetp);
         flows.Steps.Add(currentStep);
@@ -84,7 +85,8 @@ public class FlowLoaderService(ILogger logger, IConfig config, IDataContext data
         nextSetp = new NextStep
         {
             NextStepId = 3,
-            NextStepConditions = "OK"
+            NextStepConditions = "OK",
+            NextStepRunType = "A_S_SaveFile"
         };
         currentStep.NextSteps.Add(nextSetp);
         flows.Steps.Add(currentStep);
@@ -99,7 +101,8 @@ public class FlowLoaderService(ILogger logger, IConfig config, IDataContext data
         nextSetp = new NextStep
         {
             NextStepId = 4,
-            NextStepConditions = "NO"
+            NextStepConditions = "NO",
+            NextStepRunType = "A_P_Error"
         };
         currentStep.NextSteps.Add(nextSetp);
         flows.Steps.Add(currentStep);
@@ -120,7 +123,7 @@ public class FlowBuilderService(ILogger logger, IFlowLoader flowLoader) : IFlowB
 {
     public async Task BuildFlowAsync()
     {
-        logger.Information($"Start:开始建造Flow");
+        logger.Information($"S\t:Build Flow");
         await flowLoader.LoadFlowAsync();
     }
 }

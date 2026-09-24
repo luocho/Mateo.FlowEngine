@@ -1,6 +1,10 @@
 ﻿namespace Framework;
 
 public interface IContext;
+public interface IActionContext : IContext
+{
+    MateoMsg GetContext();
+}
 public interface IErrorContext : IContext
 {
     MateoMsg GetContext();

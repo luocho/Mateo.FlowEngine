@@ -1,6 +1,11 @@
 ﻿namespace Framework;
 
-public sealed class A_P_DownLoadForHttp(IConfig _config, IDataContext _contextService,IErrorContext errorContext) : IAction
+public sealed class A_P_DownLoadForHttp(
+    IActionContext actionContext,
+    IConfig _config,
+    IDataContext _contextService,
+    IErrorContext errorContext
+    ) : IAction
 {
     //下载文件-》解析文件-》处理文件-》存储文件
     //依赖注入，任务取消，
@@ -11,11 +16,12 @@ public sealed class A_P_DownLoadForHttp(IConfig _config, IDataContext _contextSe
             string url = _config.TryGetValue(ConfigConst.URL);
             string fileContent = await DownloadFileAsync(url);
             _contextService.GetContext().SetValue(ContextConst.DownloadContent, fileContent);
-            await Task.CompletedTask;
+            actionContext.GetContext().SetValue(nameof(A_P_DownLoadForHttp), ActionResult.OK);
         }
         catch (Exception ex)
         {
-            errorContext.GetContext().SetValue(ErrorConst.ErrorMsg,ex.Message);
+            errorContext.GetContext().SetValue(ErrorConst.ErrorMsg, ex.Message);
+            actionContext.GetContext().SetValue(nameof(A_P_DownLoadForHttp), ActionResult.NO);
         }
     }
 

@@ -12,6 +12,7 @@ enum FlowStepType {
 message NextStep{
 	int32 nextStepId=1;
 	string nextStepConditions=2;
+	string nextStepRunType=3;
 }
 
 message FlowStep {
