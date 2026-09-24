@@ -15,6 +15,10 @@ public class FlowRunner(IServiceProvider provider, ILogger logger)
             {
                 await actionInstance.RunAsync();
             }
+            else
+            {
+                throw new ArgumentNullException($"{flowName} not exist");
+            }
         }
         catch (Exception ex)
         {

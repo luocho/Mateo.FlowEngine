@@ -7,4 +7,5 @@ services.Init();
 
 using var serviceProvider = services.BuildServiceProvider();
 await serviceProvider.GetRequiredService<FlowEngine>().RunAsync();
+Console.ReadLine();
 
