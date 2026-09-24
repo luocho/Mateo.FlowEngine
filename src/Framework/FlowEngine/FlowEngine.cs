@@ -13,6 +13,7 @@ public class FlowEngine(
     )
 {
     private ConcurrentQueue<string> runStepQueue = new ConcurrentQueue<string>();
+    private FlowList currentFlowList=new FlowList();
     private Flow currentFlow=new Flow();
     private delegate Task StartRun();
     private StartRun? startRun;
@@ -21,9 +22,10 @@ public class FlowEngine(
         await builder.BuildFlowAsync();
         startRun += ExcuteAsync;
         var obj = dataContext.GetContext().GetObjValue(ContextConst.FlowObject);
-        if (obj is Flow flow)
+        if (obj is FlowList flowList)
         {
-            currentFlow = flow;
+            currentFlowList = flowList;
+            currentFlow = FindFlowByID(1);
             var currentStep = FindStepByID(1);
             runStepQueue.Enqueue(currentStep.RunType);
             await ExcuteAsync();
@@ -59,6 +61,7 @@ public class FlowEngine(
         }
         
     }
+    private Flow FindFlowByID(int id) => currentFlowList.Flows.First(p => p.Id == id);
     private FlowStep FindStepByID(int id) => currentFlow.Steps.First(p => p.Id == id);
     private FlowStep FindStepByRunType(string runType) => currentFlow.Steps.First(p => p.RunType.Equals(runType));
     private List<NextStep> MatchNextStep(RepeatedField<NextStep> nextSteps,string actionResult)

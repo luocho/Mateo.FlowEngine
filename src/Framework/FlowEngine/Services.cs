@@ -11,7 +11,7 @@ public class ConfigService : IConfig
         _configurations = new Dictionary<string, string>();
         _configurations[ConfigConst.URL] = "https://example.com";
         _configurations[ConfigConst.FilePath] = @"D:\demo.txt";
-        _configurations[ConfigConst.FlowPath] = @"D:\mateoflow.mf";
+        _configurations[ConfigConst.FlowPath] = @"D:\FlowList.mf";
     }
     public string TryGetValue(string key, string defaultValue = "")
     {
@@ -40,10 +40,11 @@ public class FlowLoaderService(ILogger logger, IConfig config, IDataContext data
         logger.Information($"S\t:Read Flow");
         string flowPath = config.TryGetValue("FlowPath", string.Empty);
 
-        await write(flowPath);
+        //await write(flowPath);
         logger.Information($"P\t:FlowPath={flowPath}");
         byte[] flowData = await File.ReadAllBytesAsync(flowPath);
-        Flow flow = Flow.Parser.ParseFrom(flowData);
+
+        FlowList flow = FlowList.Parser.ParseFrom(flowData);
         data.GetContext().SetValue(ContextConst.FlowObject, flow, true);
         logger.Information($"E\t:Read Flow Completed");
     }
